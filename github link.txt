@@ -1,0 +1,1 @@
+https://github.com/asalhani/netcore-telemetry-playground.git
