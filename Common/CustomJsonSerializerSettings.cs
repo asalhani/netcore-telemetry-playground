@@ -7,7 +7,7 @@ namespace Common
     {
         public static readonly CustomJsonSerializerSettings Instance = new CustomJsonSerializerSettings();
 
-        private CustomJsonSerializerSettings()
+        private CustomJsonSerializerSettings() // test
         {
             DefaultContractResolver contractResolver = new DefaultContractResolver();
             CamelCaseNamingStrategy caseNamingStrategy = new CamelCaseNamingStrategy();
