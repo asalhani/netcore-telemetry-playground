@@ -42,5 +42,11 @@ namespace WebApp01.Controllers
         {
             return Ok("PostRequest in WebApp01 finished........");
         }
+
+        [HttpPost("exception")]
+        public IActionResult Exception([FromBody] PostRequestParam param)
+        {
+            throw new NotSupportedException("Inspection exceptionl...!!!");
+        }
     }
 }

@@ -19,7 +19,6 @@ namespace WebApp02
             Activity.ForceDefaultIdFormat = true;
             
             ServiceConfigurationHelper.SetupService<Startup>(args);
-            
             CreateHostBuilder(args).Build().Run();
         }
 

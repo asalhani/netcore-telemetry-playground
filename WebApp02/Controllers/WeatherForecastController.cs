@@ -31,16 +31,21 @@ namespace WebApp02.Controllers
             _clientFactory = clientFactory;
         }
 
+        [HttpGet("Web01Exception")]
+        public IActionResult Web01Exception()
+        {
+            Log.Logger.Warning("Calling Web01 Exception API...");
+            _webApp01Api.ExceptionRequest(new PostRequestParam() {Name = "Exception request"}, "hhhh").Wait();
+            return Ok();
+        }
+
         [HttpGet]
         public async Task<IActionResult> Get()
         {
             Log.Logger.Information("Event from: Log.Logger.Information");
             Log.Information("Event from: Log.Information");
-            
-            Activity.Current?.AddEvent(new ActivityEvent("Adib event"));
 
             var result = await _webApp01Api.GetAll();
-            Activity.Current?.AddEvent(new ActivityEvent("Adib event"));
             await _webApp01Api.PostRequest(new PostRequestParam() {Name = "test name"}, "this is header value from webapp02 controller");
             return Ok(result);
             

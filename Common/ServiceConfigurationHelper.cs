@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,6 +23,8 @@ namespace Common
 {
     public static class ServiceConfigurationHelper
     {
+        private static readonly string CorsEnabledPolicy = "CorsEnabledPolicy";
+
         public static void AddRefitService<T>(this IServiceCollection services, string serviceUrl) where T : class
         {
             services.AddTransient(p => p.GetService<IRefitServiceResolver>().GetRefitService<T>(serviceUrl));
@@ -31,7 +36,7 @@ namespace Common
             services.AddTransient(p =>
                 p.GetService<IRefitServiceResolver>().GetRefitService<T>(implementationFactory.Invoke(p)));
         }
-        
+
 
         public static IConfiguration BuildConfiguration()
         {
@@ -43,14 +48,13 @@ namespace Common
                 .AddJsonFile($"appsettings.{currentEnv}.json", optional: true)
                 .AddEnvironmentVariables()
                 .Build();
-
         }
 
         public static void SetupService<startup>(string[] args) where startup : class
         {
             SetupService<startup>(args, BuildConfiguration());
         }
-        
+
         public static void SetupService<startup>(string[] args, IConfiguration configuration) where startup : class
         {
             try
@@ -60,9 +64,9 @@ namespace Common
                     .UseStartup<startup>()
                     .UseSerilog()
                     .Build();
-            
+
                 LoggingHelper.SetupLogger(configuration);
-                
+
                 host.Run();
             }
             catch (Exception ex)
@@ -70,7 +74,6 @@ namespace Common
                 Console.WriteLine(ex.ToString());
                 Log.Logger.Error("Startup Setup Error. {@ex}", ex);
             }
-
         }
 
         public static void AddTelemetry(this IServiceCollection services, IWebHostEnvironment _currentEnvironment,
@@ -98,7 +101,7 @@ namespace Common
                 //     return httpContext.Request.Method.Equals("GET");
                 // };
             });
-            
+
             // using var redisConnection = ConnectionMultiplexer.Connect("localhost:6379");
             services.AddOpenTelemetryTracing(
                 builder =>
@@ -121,7 +124,6 @@ namespace Common
                         {
                             config.AgentHost = "localhost";
                             config.AgentPort = 6831;
-                            
                         });
                     if (_currentEnvironment.IsDevelopment())
                     {
@@ -252,6 +254,30 @@ namespace Common
                             });
                     }
                 });
+        }
+
+        public static void UseServiceConfiguration(this IApplicationBuilder app
+            , IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            app.UseMiddleware<EnableRequestRewindMiddleware>();
+            app.UseMiddleware<ServiceExceptionHandler>();
+
+            app.UseHttpsRedirection();
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseCors(CorsEnabledPolicy);
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }

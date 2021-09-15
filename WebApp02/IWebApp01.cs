@@ -12,5 +12,9 @@ namespace WebApp02
 
         [Post("/WeatherForecast/postRequest")]
         Task PostRequest(PostRequestParam param, [Header("adib-header")] string headerValue);
+        
+        [Post("/WeatherForecast/exception")]
+        Task ExceptionRequest(PostRequestParam param, [Header("test-header")] string headerValue);
+        
     }
 }
