@@ -35,7 +35,7 @@ namespace WebApp02.Controllers
         public IActionResult Web01Exception()
         {
             Log.Logger.Warning("Calling Web01 Exception API...");
-            _webApp01Api.ExceptionRequest(new PostRequestParam() {Name = "Exception request"}, "hhhh").Wait();
+             _webApp01Api.ExceptionRequest(new PostRequestParam() {Name = "Exception request"}, "hhhh").Wait();
             return Ok();
         }
 

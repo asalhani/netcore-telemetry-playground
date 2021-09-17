@@ -268,9 +268,11 @@ namespace Common
                 app.UseDeveloperExceptionPage();
             }
 
+            
             app.UseMiddleware<EnableRequestRewindMiddleware>();
+            app.UseRequestResponseLogging();
             app.UseMiddleware<ServiceExceptionHandler>();
-
+            
             app.UseHttpsRedirection();
             app.UseRouting();
 
@@ -282,6 +284,11 @@ namespace Common
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+        }
+        
+        public static IApplicationBuilder UseRequestResponseLogging(this IApplicationBuilder builder)
+        {
+            return builder.UseMiddleware<RequestResponseLoggingMiddleware>();
         }
     }
 }
