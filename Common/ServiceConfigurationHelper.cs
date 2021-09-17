@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -52,6 +53,9 @@ namespace Common
 
         public static void SetupService<startup>(string[] args) where startup : class
         {
+            Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+            Activity.ForceDefaultIdFormat = true;
+            
             SetupService<startup>(args, BuildConfiguration());
         }
 
