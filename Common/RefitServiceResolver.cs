@@ -23,17 +23,26 @@ namespace Common
             var refitsettings = new RefitSettings
             {
                 JsonSerializerSettings = CustomJsonSerializerSettings.Instance,
+                
             };
+            
+            
 
-            var httpClient = _httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient("refit_http_client");
+            
             httpClient.BaseAddress = new Uri(serviceUrl);
 
+            // if (!string.IsNullOrWhiteSpace(_authorizationTokenProvider?.Token))
+            // {
+            //     httpClient.DefaultRequestHeaders.Add("Authorization", _authorizationTokenProvider.Token);
+            // }
+            
             // Add API Name as http agent header for internal communication tracking
             httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(GetUserAgent());
     
             // No need for CSRF with (cookieless) Rest API!
             //InjectCSRFSecuitry(httpClient);
-
+            
             return RestService.For<T>(httpClient, refitsettings);
         }
 

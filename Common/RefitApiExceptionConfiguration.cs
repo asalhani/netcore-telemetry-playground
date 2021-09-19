@@ -17,10 +17,11 @@ namespace Common
         {
             _exception = exception;
         }
-        public string Configure()
+        public string Configure(Guid? errorId = null)
         {
+            errorId ??= Guid.NewGuid();
+
             var message = _exception.GetContentAsAsync<RefitApiExceptionResponse>().Result?.Message;
-            Guid errorId = Guid.NewGuid();
 
             int.TryParse(_exception.GetType().GetProperty("ErrorCode")?.GetValue(_exception, null).ToString(), out int errorCode);
 
@@ -36,7 +37,7 @@ namespace Common
                     new ApiErrorResult()
                     {
                         Code = errorCode,
-                        ErrorId = errorId,
+                        ErrorId = errorId.Value,
                         Message = message
                     }
                 }

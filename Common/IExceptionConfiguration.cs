@@ -1,7 +1,9 @@
-﻿namespace Common
+﻿using System;
+
+namespace Common
 {
     public interface IExceptionConfiguration
     {
-        string Configure();
+        string Configure(Guid? errorId = null);
     }
 }

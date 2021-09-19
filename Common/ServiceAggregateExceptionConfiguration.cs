@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Serilog;
 
@@ -16,10 +17,11 @@ namespace Common
             _exceptions = exceptions;
         }
 
-        public string Configure()
+        public string Configure(Guid? errorId = null)
         {
-            Guid errorId = Guid.NewGuid();
-
+            errorId ??= Guid.NewGuid();
+            
+            var test = Activity.Current.TraceId;
 
             var error = new ApiErrorListResultOutput()
             {
@@ -35,7 +37,7 @@ namespace Common
                 error.Errors.Add(new ApiErrorResult()
                 {
                     Code = errorCode,
-                    ErrorId = errorId,
+                    ErrorId = errorId.Value,
                     Message = exception.Message
 
                 });

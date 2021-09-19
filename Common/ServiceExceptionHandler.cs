@@ -3,18 +3,24 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Serilog;
 
 namespace Common
 {
      public class ServiceExceptionHandler
-    {
+     {
+          
+         private const string _ERROR_ID_HEADER = "error.id";
+         private const string _SERVICE_NAME_HEADER = "exception.message";
         private readonly RequestDelegate _next;
+        private readonly ServiceSettings _serviceSettings;
 
-        public ServiceExceptionHandler(RequestDelegate next)
+        public ServiceExceptionHandler(RequestDelegate next, IOptions<ServiceSettings> serviceSettings)
         {
             _next = next;
+            _serviceSettings = serviceSettings.Value;
         }
 
         public async Task Invoke(HttpContext context)
@@ -37,7 +43,12 @@ namespace Common
             var response = context.Response;
             int code = (int)HttpStatusCode.BadRequest;
             var message = exception.Message;
-            var errorId = Guid.NewGuid();
+            
+            // check if header already having error.id field
+            var errorId = response.Headers.ContainsKey(_ERROR_ID_HEADER) 
+                ? new Guid(response.Headers[_ERROR_ID_HEADER])
+                : Guid.NewGuid();
+            
             var requestBody = "";
 
 
@@ -73,20 +84,20 @@ namespace Common
             switch (exception)
             {
                 case ServiceAggregateException aggregateException:
-                    result = new ServiceAggregateExceptionConfiguration(context, aggregateException).Configure();
+                    result = new ServiceAggregateExceptionConfiguration(context, aggregateException).Configure(errorId);
                     break;
 
                 case Refit.ApiException apiException:
-                    result = new RefitApiExceptionConfiguration(context, apiException).Configure();
+                    result = new RefitApiExceptionConfiguration(context, apiException).Configure(errorId);
                     break;
 
                 case ServiceBaseException serviceBaseException:
-                    result = new ServiceBaseExceptionConfiguration(context, serviceBaseException).Configure();
+                    result = new ServiceBaseExceptionConfiguration(context, serviceBaseException).Configure(errorId);
                     break;
 
                 default:
                     code = (int)HttpStatusCode.InternalServerError;
-                    result = new GeneralExceptionConfiguration(context, exception).Configure();
+                    result = new GeneralExceptionConfiguration(context, exception).Configure(errorId);
                     break;
 
             }
@@ -102,6 +113,13 @@ namespace Common
 
             response.StatusCode = (int)code;
             response.ContentType = "application/json";
+            
+            // push errorId and service name in whcih the expection happned to the header
+            if(!response.Headers.ContainsKey(_ERROR_ID_HEADER))
+                response.Headers.Add(_ERROR_ID_HEADER, errorId.ToString());
+            
+            if(!response.Headers.ContainsKey(_SERVICE_NAME_HEADER))
+                response.Headers.Add(_SERVICE_NAME_HEADER, _serviceSettings.ApiName);
 
             // Destructuring the exception object manually will lead to 
             // errors when the nesting level is more than Maximum destructuring depth
@@ -110,6 +128,11 @@ namespace Common
                .Error(exception, $"{result} {Environment.NewLine} {errorMsg} ", errorId);
 
             await response.WriteAsync(result);
+        }
+
+        private string EncodeException(Exception exception)
+        {
+            return WebUtility.UrlEncode(exception.ToString());
         }
     }
 }

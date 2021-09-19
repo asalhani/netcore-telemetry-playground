@@ -23,21 +23,8 @@ namespace WebApp01
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers(options => options.EnableEndpointRouting = false);
-            services
-                .AddControllers(options => { options.AllowEmptyInputInBodyModelBinding = true; });
-
-            services.AddHttpClient();
-            services.AddScoped<IRefitServiceResolver, RefitServiceResolver>();
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            
-            services.AddSingleton<ServiceSettings>();
+            services.ConfigureServices(Configuration, _currentEnvironment);
             var serviceConfig = Configuration.GetSection("AppSettings").Get<ServiceSettings>();
-            
-
-            services.AddTelemetry(_currentEnvironment, Configuration);
-            
-            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

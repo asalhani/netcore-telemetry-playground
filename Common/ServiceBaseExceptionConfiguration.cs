@@ -22,10 +22,10 @@ namespace Common
             _exception = exception;
         }
 
-        public string Configure()
+        public string Configure(Guid? errorId = null)
         {
             var message = _exception.Message;
-            var errorId = Guid.NewGuid();
+            errorId ??= Guid.NewGuid();
 
             Log.ForContext("Type", "Error")
                 .ForContext("Exception", _exception, destructureObjects: true)
@@ -44,7 +44,7 @@ namespace Common
                     new ApiErrorResult
                     {
                         Code =errorCode,
-                        ErrorId = errorId,
+                        ErrorId = errorId.Value,
                         Message = message
                     }
                 }

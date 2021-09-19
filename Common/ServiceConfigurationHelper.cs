@@ -9,6 +9,7 @@ using System.Net.Http;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,7 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Refit;
 using Serilog;
 
 namespace Common
@@ -37,8 +39,7 @@ namespace Common
             services.AddTransient(p =>
                 p.GetService<IRefitServiceResolver>().GetRefitService<T>(implementationFactory.Invoke(p)));
         }
-
-
+        
         public static IConfiguration BuildConfiguration()
         {
             var currentEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
@@ -282,6 +283,31 @@ namespace Common
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+        }
+
+        public static void ConfigureServices(this IServiceCollection services, IConfiguration Configuration, IWebHostEnvironment webHostEnvironment)
+        {
+            services.AddControllers(options => options.EnableEndpointRouting = false);
+            services
+                .AddControllers(options => { options.AllowEmptyInputInBodyModelBinding = true; });
+
+            services.AddHttpClient();
+            services.AddScoped<IRefitServiceResolver, RefitServiceResolver>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+            var serviceConfig = Configuration.GetSection("AppSettings");
+            services.Configure<ServiceSettings>(serviceConfig);
+            
+            services.AddTelemetry(webHostEnvironment, Configuration);
+
+            services.AddTransient<AuthenticationHeaderHandler>();
+            services.AddTransient<RefitMessageHandler>();
+            
+            services.AddHttpClient("refit_http_client")
+                .AddHttpMessageHandler<AuthenticationHeaderHandler>()
+                .AddHttpMessageHandler<RefitMessageHandler>();
+
+            services.AddControllers();
         }
     }
 }

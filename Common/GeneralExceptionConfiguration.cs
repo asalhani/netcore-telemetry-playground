@@ -20,10 +20,10 @@ namespace Common
             _logException = logException;
             _code = HttpStatusCode.BadRequest;
         }
-        public string Configure()
+        public string Configure(Guid? errorId = null)
         {
+            errorId ??= Guid.NewGuid();
             var message = "Internal server error";
-            Guid errorId = Guid.NewGuid();
 
             if( _logException )
             {
@@ -41,7 +41,7 @@ namespace Common
                     new ApiErrorResult()
                     {
                         Code = 1000,
-                        ErrorId = errorId,
+                        ErrorId = errorId.Value,
                         Message = message
                     }
                 }
